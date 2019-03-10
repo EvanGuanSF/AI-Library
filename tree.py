@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
 import math
-import warnings
 from csc665 import metrics
 
 
 class DecisionTreeRegressor:
 
-    def __init__(self, max_depth, min_samples_leaf):
+    def __init__(self, max_depth=math.inf, min_samples_leaf=1):
         # Is the tree ready to make predictions?
         self.is_built = False
         # Maximum depth of the tree, starting from root node=0.
@@ -24,21 +23,18 @@ class DecisionTreeRegressor:
                 + "-" + str(self.split_row_index + 1))
         else:
             is_split_info = "]"
-
         # Recurse into left subtree.
         if self.left is None:
             return ' ' * self.depth * 2 + str(self.depth) + ": " + \
                 '[Val:{0:.2f}|MSE:{1:.2f}|N:{2:}{3:}'.format(self.value, self.mse, self.N, is_split_info)
         else:
             repr(self.left)
-
         # Recurse into right subtree.
         if self.right is None:
             return ' ' * self.depth * 2 + str(self.depth) + ": " + \
                 '[Val:{0:.2f}|MSE:{1:.2f}|N:{2:}{3:}'.format(self.value, self.mse, self.N, is_split_info)
         else:
             repr(self.right)
-
         # Return info about node 0 and all child nodes.
         return ' ' * self.depth * 2 + str(self.depth) + ": " + \
             '[Val:{0:.2f}|MSE:{1:.2f}|N:{2:}{3:}'.format(self.value, self.mse, self.N, is_split_info) +\
@@ -101,13 +97,9 @@ class DecisionTreeRegressor:
 
         # Iterate over every column in X and try to split
         for i in range(self.X.shape[1]):
-            # print("Iterating on col: " + str(i))
             self.find_best_split(i)
 
         # If we are not a leaf, continue splitting.
-        # Once done with finding the split, actually split and create two subtrees
-        # We only need to create subtrees at this point if we have found a good split,
-        # so check the variables for initialization before continuing, and return otherwise.
         if self.split_val is not None:
             # Create new subtrees based on that information if row indices in range.
             # Get sub-indices to iloc the sections that will be needed.
@@ -134,11 +126,10 @@ class DecisionTreeRegressor:
                     self.depth + 1)
 
     def find_best_split(self, i):
-
         # X contains the numeric values of the rows of the specified column within the dataframe.
         local_X = self.X.iloc[self.indices, i]
         # y contains the numeric values of the rows of the specified column within the interested values array.
-        local_y = self.y.take(self.indices)
+        local_y = np.array(self.y.take(self.indices))
         # Sort local_X, local_y, and indices using X as the key.
         local_X, local_y, self.indices = zip(*sorted(zip(local_X, local_y, self.indices)))
         self.indices = np.array(self.indices)
@@ -146,57 +137,37 @@ class DecisionTreeRegressor:
         # Calculate MSE values and decide if this the best split so far.
         # If yes, set the object values: self.split_col, self.split_val, etc.
         # A manual for loop is required because we will on occasion skip row indices.
-        ''' Print current X and y columns
-        print("sorting by: " + self.X.columns[i])
-        for j in range(len(local_X)):
-            print('|{:<3}|'.format(j) + 'X: {:<7.3f}|'.format(local_X[j]) + ' y: {:<7.3f}|'.format(local_y[j]))
-        # '''
-
         x = 0
         while x < self.N:
             # Check and skip past duplicate X-rows.
             # We group together duplicate X's because X will determine what "bucket" an arbitrary datapoint falls into.
             # Be sure to skip this processing if the split has two or fewer elements in it so that we can get to leaf nodes.
-            if self.N > 2:
-                skipped_values = False
-                x_start_val = local_X[x]
-                temp_x = x + 1
-                while temp_x < self.N and local_X[temp_x] == x_start_val:
-                    skipped_values = True
-                    temp_x += 1
-                if skipped_values is True:
-                    x = temp_x - 1
+            skipped_values = False
+            x_start_val = local_X[x]
+            temp_x = x + 1
+            while temp_x < self.N and local_X[temp_x] == x_start_val:
+                skipped_values = True
+                temp_x += 1
+            if skipped_values is True:
+                x = temp_x - 1
 
             # Use the x_plus value to bounds check indices.
             x_plus = x + 1 if x + 1 < self.N else x
-            # Combined mse
-            current_mse = (((np.array(local_y[:x_plus]).mean() - np.array(local_y[:x_plus])) ** 2).mean()
-                           + ((np.array(local_y[x_plus:]).mean() - np.array(local_y[x_plus:])) ** 2).mean())
 
-            ''' Print state information of current row.
-            print(
-                '|{:<2}|'.format(str(x))
-                + ' C  {0:<7.2f}|'.format(current_mse) + ' B  {0:<7.2f}|'.format(self.split_mse)
-                + ' X  {0:<7.2f}|'.format(local_X[x]) + ' X+ {0:<7.2f}|'.format(local_X[x_plus])
-                + ' Yv {0:<7.2f}|'.format(local_y[x]) + " [" + str(x) + ", " + str(x_plus) + "]")
-            # '''
-
-            # Special case when we only have two nodes in the split.
-            if self.N == 2:
-                # Check previous column. If that column did not contain duplicates, then we have no work to do.
-                if i > 0 and self.X.iloc[x, i - 1] != self.X.iloc[x_plus, i - 1]:
-                    return
-                # Check for duplicate X values in the current column.
-                elif local_X[x] != local_X[x_plus]:
-                    # Supress empty slice warnings.
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", category=RuntimeWarning)
-                        self.split_mse = np.array(local_y[0:x]).mean()
-                    self.split_col = i
-                    self.split_val = (local_X[x] + local_X[x_plus]) / 2
-                    self.split_row_index = x
-                    self.split_optimal_indices = self.indices
+            # Check if we have reached the end of the X column after following up on duplicates.
+            # If we have, don't split, just go to the next column iteration.
+            if(x_plus == x):
                 return
+
+            #  Calculate mse in chunks to improve readability and reduce function calls.
+            #  Left section mses
+            left_val = np.array(local_y[:x_plus]).mean() if np.array(local_y[:x_plus]).mean() > 0 else 0
+            #  Right section mses
+            right_val = np.array(local_y[x_plus:]).mean() if np.array(local_y[x_plus:]).mean() > 0 else 0
+            #  Averaged mse
+            current_mse = np.average(np.concatenate((
+                (left_val - np.array(local_y[:x_plus])) ** 2,
+                (right_val - np.array(local_y[x_plus:])) ** 2)))
 
             # If new current mse is equal to or better than the best mse,
             # then we adjust varaiables and continue.
@@ -206,14 +177,6 @@ class DecisionTreeRegressor:
                 self.split_val = (local_X[x] + local_X[x_plus]) / 2
                 self.split_row_index = x
                 self.split_optimal_indices = self.indices
-                ''' Print information about the split information update.
-                print("x: " + str(x) + " x_plus: " + str(x_plus))
-                print(
-                    "Split val: " + '{0:<7.2f}'.format(self.split_val) + " On row " + str(x)
-                    + " with L/R values: L:" + '{0:<7.2f}'.format(local_X[x])
-                    + " R:" + '{0:<7.2f}'.format(local_X[x_plus]) + "Sr: " + '{0:<7.2f}'.format(self.split_row_index))
-                print('{:-<75}'.format(''))
-                # '''
             # If the mse we just calculated is worse than the mse for the entire subtree,
             # then we just return.
             else:
