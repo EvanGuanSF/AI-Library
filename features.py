@@ -10,7 +10,7 @@ def train_test_split(X, y, test_size=0.0, shuffle=True, random_state=None):
     test_size = test_size if (type(test_size) is float and 0.0 <= test_size <= 1.0) else 0.25
     first_split_size = math.ceil(len(y) * test_size)
     # Then check and set the random seed.
-    random_state = random_state if random_state is not None else random.randint(0, 100000)
+    random_state = random_state if random_state is not None else random.randint(0, 2**32 - 1)
 
     # Then shuffle if needed.
     if shuffle:

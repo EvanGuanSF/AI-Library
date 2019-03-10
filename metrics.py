@@ -1,5 +1,7 @@
 import math
 import warnings
+import pandas as pd
+import numpy as np
 
 
 def mse(predicted_values, known_values):
@@ -15,6 +17,9 @@ def rmse(predicted_values, known_values):
 
 
 def rsq(predicted_values, known_values):
+    # Check for correct datatype, fix if incorrect.
+    if isinstance(known_values, pd.DataFrame):
+        known_values = np.reshape(np.array(known_values), -1)
     # Calculate and return the calculated r^2 score.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
