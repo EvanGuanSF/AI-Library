@@ -5,6 +5,9 @@ import numpy as np
 
 
 def mse(predicted_values, known_values):
+    # Check for correct datatype, fix if incorrect.
+    if isinstance(known_values, pd.DataFrame):
+        known_values = np.reshape(np.array(known_values), -1)
     # MSE: (SUM((y_n - y_n_pred)^2))/n_samples
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -12,6 +15,9 @@ def mse(predicted_values, known_values):
 
 
 def rmse(predicted_values, known_values):
+    # Check for correct datatype, fix if incorrect.
+    if isinstance(known_values, pd.DataFrame):
+        known_values = np.reshape(np.array(known_values), -1)
     # RMSE: sqrt((SUM((y_n - y_n_pred)^2))/n_samples)
     return math.sqrt(mse(predicted_values, known_values))
 

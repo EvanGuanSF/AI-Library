@@ -156,7 +156,7 @@ class DecisionTreeRegressor:
 
             # Check if we have reached the end of the X column after following up on duplicates.
             # If we have, don't split, just go to the next column iteration.
-            if(x_plus == x):
+            if x_plus == x:
                 return
 
             #  Calculate mse in chunks to improve readability and reduce function calls.
@@ -194,7 +194,7 @@ class DecisionTreeRegressor:
             return
 
         # Create the return np.array.
-        y_pred = np.empty(0)
+        y_pred = list()
 
         # For each row in X, check it through the tree.
         for i in range(X.shape[0]):
@@ -203,25 +203,15 @@ class DecisionTreeRegressor:
             while True:
                 if tree_navigator.split_col is not math.inf:
                     X_val = X.iloc[i, int(tree_navigator.split_col)]
-                    # print("Checking: " + str(X_val) + " against " + '{0:.2f}'.format(tree_navigator.split_val))
-                    if X_val <= tree_navigator.split_val:
-                        if tree_navigator.left is not None:
+                    if X_val <= tree_navigator.split_val and tree_navigator.left is not None:
                             tree_navigator = tree_navigator.left
-                            continue
-                        else:
-                            y_pred = np.append(y_pred, tree_navigator.value)
-                            # print("Making prediction: ", y_pred)
-                            break
-                    if X_val > tree_navigator.split_val:
-                        if tree_navigator.right is not None:
+                    elif X_val > tree_navigator.split_val and tree_navigator.right is not None:
                             tree_navigator = tree_navigator.right
-                            continue
-                        else:
-                            y_pred = np.append(y_pred, tree_navigator.value)
-                            # print("Making prediction: ", y_pred)
-                            break
+                    else:
+                        y_pred.append(tree_navigator.value)
+                        break
                 else:
-                    y_pred = np.append(y_pred, tree_navigator.value)
+                    y_pred.append(tree_navigator.value)
                     break
 
         return np.array(y_pred)
