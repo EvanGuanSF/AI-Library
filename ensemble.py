@@ -4,6 +4,9 @@ import random
 import csc665.metrics
 import csc665.tree
 # import sklearn.tree
+import threading
+import asyncio
+import concurrent.futures as cf
 
 
 class RandomForestRegressor:
@@ -27,19 +30,40 @@ class RandomForestRegressor:
             np.random.seed(self.random_state)
 
         n_samples_per_tree = int(self.sample_ratio * X.shape[0])
-
+        tree_builder = cf.ThreadPoolExecutor(max_workers=4)
         # Make n_estimator amount of randomly seeded trees.
+        '''
+        with cf.ThreadPoolExecutor(max_workers=4) as tree_builders:
+            for x in range(self.n_estimators):
+                # Generate a selection of indices in-place (duplicate indices allowed)
+                random_indices = np.random.choice(a=X.shape[0], size=n_samples_per_tree, replace=True)
+
+                new_dtr = csc665.tree.DecisionTreeRegressor()
+                # new_dtr = sklearn.tree.DecisionTreeRegressor()
+                # args = "X.iloc[random_indices], y[random_indices]"
+                # new_dtr.fit(X.iloc[random_indices], y[random_indices])
+                tree_builders.submit(new_dtr.fit, (X.iloc[random_indices], y[random_indices]))
+                print("Tree #: ", str(x + 1), " now building...")
+                # Add the tree to the object array.
+                self.forest.append(new_dtr)
+        '''
         for x in range(self.n_estimators):
             # Generate a selection of indices in-place (duplicate indices allowed)
             random_indices = np.random.choice(a=X.shape[0], size=n_samples_per_tree, replace=True)
 
             new_dtr = csc665.tree.DecisionTreeRegressor()
             # new_dtr = sklearn.tree.DecisionTreeRegressor()
-            new_dtr.fit(X.iloc[random_indices], y[random_indices])
+            # args = "X.iloc[random_indices], y[random_indices]"
+            # new_dtr.fit(X.iloc[random_indices], y[random_indices])
+            tree_builder.submit(new_dtr.fit(X.iloc[random_indices], y[random_indices]))
+            print("Tree #: ", str(x + 1), " now building...")
             # Add the tree to the object array.
             self.forest.append(new_dtr)
-
-        # self.print_trees()
+        cf.wait(tree_builder)
+        tree_builder.shutdown(wait=True)
+        # build_trees.shutdown(wait=True)
+        print("Printing trees...")
+        self.print_trees()
         self.is_built = True
 
         return

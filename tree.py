@@ -52,6 +52,8 @@ class DecisionTreeRegressor:
         # Set the is_built bool to true to indicate that the tree is ready to make predictions.
         self.is_built = True
 
+        return self
+
     def internal_fit(self, X, y, indices, depth):
         # The feature dataframe.
         self.X = X
@@ -124,6 +126,12 @@ class DecisionTreeRegressor:
                     self.y[opt_indices_right],
                     np.array(range(len(opt_indices_right))),
                     self.depth + 1)
+
+        # Delete X and y to free memory resources.
+        del self.X
+        self.X = None
+        del self.y
+        self.y = None
 
     def find_best_split(self, i):
         # X contains the numeric values of the rows of the specified column within the dataframe.
