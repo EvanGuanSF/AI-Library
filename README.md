@@ -1,1 +1,1 @@
-# csc665
+# Safekeeping code library for CSc665
