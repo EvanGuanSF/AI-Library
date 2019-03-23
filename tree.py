@@ -18,9 +18,9 @@ class DecisionTreeRegressor:
         # This string contains the formatted split information if the node is a parent node.
         is_split_info: str
         if self.split_val != math.inf:
-            is_split_info = '|Sval:<={0:.2f}|Scol:{1:}|Srow:{2:}]'.format(
-                self.split_val, self.X.columns[self.split_col], str(self.split_row_index) +
-                "-" + str(self.split_row_index + 1))
+            is_split_info = '|Split: {0:} <= {1:.2f}|Srow:{2:}]'.format(
+                self.X.columns[self.split_col], self.split_val,
+                str(self.split_row_index) + "-" + str(self.split_row_index + 1))
         else:
             is_split_info = "]"
         # Recurse into left subtree.
@@ -254,18 +254,18 @@ class DecisionTreeClassifier:
         # Recurse into left subtree.
         if self.left is None:
             return ' ' * self.depth * 2 + str(self.depth) + ": " + \
-                '[Val:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info)
+                '[Value:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info)
         else:
             repr(self.left)
         # Recurse into right subtree.
         if self.right is None:
             return ' ' * self.depth * 2 + str(self.depth) + ": " + \
-                '[Val:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info)
+                '[Value:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info)
         else:
             repr(self.right)
         # Return info about node 0 and all child nodes.
         return ' ' * self.depth * 2 + str(self.depth) + ": " + \
-            '[Val:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info) +\
+            '[Value:{0}|Gini: {1:.3f}|N:{2:}{3:}'.format(str(self.value), self.gini, int(self.N), is_split_info) +\
             "\n" + repr(self.left) +\
             "\n" + repr(self.right)
 
