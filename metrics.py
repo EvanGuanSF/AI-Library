@@ -42,3 +42,14 @@ def print_scores(model, X_train, X_test, y_train, y_test):
     train_r2 = rsq(X_train, y_train)
     test_r2 = rsq(X_test, y_test)
     print(train_mse, ", ", test_mse, ", ", train_r2, ", ", test_r2)
+
+
+def accuracy_score(y_pred, y_actual):
+    # The accuracy score is the ratio of correct predictions over the total number of predictions.
+    num_correct_pred = 0
+    # Count the number of correct preditions.
+    for i in range(y_pred):
+        if y_pred[i] == y_actual[i]:
+            num_correct_pred += 1
+    # Return the ratio.
+    return num_correct_pred/len(y_pred)
