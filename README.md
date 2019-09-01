@@ -1,1 +1,1 @@
-# Safekeeping code library for CSc665
+# Safekeeping code library for SFSU course.
